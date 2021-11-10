@@ -5,27 +5,27 @@ import sys
 import inotify.adapters
 from IPython.core import ultratb
 
-from helpers.hashes import Hashes
-from services.dropbox_service import service_dropbox
-from services.service import Entry
+from src.helpers.hashes import Hashes
+from src.services.dropbox_service import service_dropbox
+from src.services.service import Entry
 
 sys.excepthook = ultratb.FormattedTB(mode="Plain", color_scheme="Linux", call_pdb=False)
 
 
 class Engine:
-    def __init__(self):
+    def __init__(self, vault_path):
         self.service = service_dropbox()
-        self.vault_path = "../res/vault"
+        self.vault_path = vault_path
         self.i = inotify.adapters.Inotify()
         self.hashes = Hashes(self.vault_path, self.service.hash_file)
 
-    def init_clone(self, remote_path, local_path):
+    def init_clone(self, remote_path):
         gen = self.service.dir_iterator(remote_path)
         # TODO: bugs when dir has capital letters
         # TODO: fix to be able to clone multiple times and fully restore remote locally
 
         for entry in gen:
-            new_entry = os.path.join(local_path, entry.get_path[1:])
+            new_entry = os.path.join(self.vault_path, entry.get_path[1:])
 
             if os.path.exists(new_entry):
                 print("Entry exists, skipping: ", new_entry)

@@ -51,11 +51,13 @@ class Hashes:
 
             for file in f_names:
                 file_path = os.path.join(root, file)
-                hash_name = self.gen_path_hash(file_path)
-                hash_value = self.service_hash(file_path)
+                p_hash = self.gen_path_hash(file_path)
+                c_hash = self.service_hash(file_path)
 
-                with open(os.path.join(self.hash_dir_path, hash_name), "wt") as f:
-                    f.write(hash_value)
+                print(f"* {os.path.join(self.hash_dir_path, p_hash)}")
+
+                with open(os.path.join(self.hash_dir_path, p_hash), "wt") as f:
+                    f.write(c_hash)
 
         print("Done\n")
 
