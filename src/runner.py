@@ -22,7 +22,6 @@ class Engine:
     def init_clone(self, remote_path):
         gen = self.service.dir_iterator(remote_path)
         # TODO: bugs when dir has capital letters
-        # TODO: fix to be able to clone multiple times and fully restore remote locally
 
         for entry in gen:
             new_entry = os.path.join(self.vault_path, entry.get_path[1:])
@@ -35,7 +34,7 @@ class Engine:
                 print("Creating [dir]: ", new_entry)
             else:
                 self.service.download_file(entry.get_path, new_entry)
-                print("Downloading [file]: ", entry.get_path)
+                print("Downloading [file]: ", new_entry)
 
     def move_to_cache(self, path, folder=False):
         pass
@@ -56,8 +55,13 @@ class Engine:
 
                 self.i.add_watch(curr_dir)
 
-    def get_diff(self):
-        changed = list()
+    def cold_sync(self):
+        altered = []
+        newly_created = []
+        p_hash_set = set(self.hashes.get_phash_list())
+
+        if not os.path.exists(self.hashes.cache_dir):
+            os.makedirs(self.hashes.cache_dir)
 
         for root, d_names, f_names in os.walk(self.vault_path):
             if root == self.hashes.hash_dir:
@@ -69,26 +73,36 @@ class Engine:
                 file_path = os.path.join(root, file)
 
                 p_hash = self.hashes.gen_path_hash(file_path)
-                with open(os.path.join(self.hashes.hash_dir, p_hash)) as file:
-                    c_hash = file.read()
 
-                # commonprefix = os.path.commonprefix([file_path, self.vault_path])
-                # remote_path = file_path[len(commonprefix) :]
+                if p_hash in p_hash_set:
+                    p_hash_set.remove(p_hash)
+                else:
+                    newly_created.append(file_path)
+                    continue
 
+                c_hash = self.hashes.get_content_hash(p_hash)
                 remote_hash = self.hashes.gen_remote_hash(file_path)
 
                 if remote_hash != c_hash:
-                    print(
-                        f"\nComparing local & remote hashes of {file_path}\n* {c_hash} -- local\n* {remote_hash} -- remote\nIdentical: {remote_hash == c_hash}"
-                    )
-                    changed.append(file_path)
-        print("\nChanges: \n", changed, sep="")
+                    self.action_modified(file_path, True)
+                    altered.append(file_path)
+        
+        for p_hash in p_hash_set:
+            filepath = self.hashes.get_filepath_from_p_hash(p_hash)
+            self.action_moved(filepath, True, p_hash)
 
-    def action_moved(self, entry_path, is_file=False):
+        new_files = []
+        for filepath in newly_created:
+            if self.action_created(filepath, True):
+                new_files.append(filepath)
+
+    def action_moved(self, entry_path ,is_file=False, p_hash=None):
         """
         Creating t_hash file @ .kagami/cache
         """
-        p_hash = self.hashes.gen_path_hash(entry_path)
+        if p_hash is None:
+            p_hash = self.hashes.gen_path_hash(entry_path)
+
         c_hash = self.hashes.get_content_hash(p_hash)
         t_hash_path = os.path.join(self.hashes.cache_dir, c_hash)
 
@@ -116,14 +130,15 @@ class Engine:
             self.hashes.hash_entry(entry_path, single_file=True)
             # delete t_hash
             os.remove(t_hash_path)
+            return False
         else:
             print(f"New file: {entry_path}")
+            return True
 
     def action_modified(self, entry_path, is_file=False):
-        self.hashes.hash_entry(entry_path, single_file=True)
-
-    def cold_sync(self):
-        pass
+        # TODO: upload new file
+        print("FILE MODIFIED: ", entry_path)
+        # self.hashes.hash_entry(entry_path, single_file=True)
 
     def real_time_sync(self):
         # TODO: Fix some issue when copying a file into place

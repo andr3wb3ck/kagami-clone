@@ -35,6 +35,7 @@ class Hashes:
             p_hash = self.gen_path_hash(path)
             c_hash = self.service_hash(path)
             with open(os.path.join(self.hash_dir_path, p_hash), "wt") as file:
+                file.write(path + "\n")
                 file.write(c_hash)
             return
 
@@ -57,6 +58,7 @@ class Hashes:
                 print(f"* {os.path.join(self.hash_dir_path, p_hash)}")
 
                 with open(os.path.join(self.hash_dir_path, p_hash), "wt") as f:
+                    f.write(file_path + "\n")
                     f.write(c_hash)
 
         print("Done\n")
@@ -67,8 +69,18 @@ class Hashes:
         """
         c_hash_path = os.path.join(self.hash_dir_path, p_hash)
         with open(c_hash_path) as file:
-            c_hash = file.read()
+            file.readline()
+            c_hash = file.readline()
         return c_hash
+
+    def get_filepath_from_p_hash(self, p_hash) -> str:
+        """
+        Retrieves filepath from hash dir given p_hash
+        """
+        c_hash_path = os.path.join(self.hash_dir_path, p_hash)
+        with open(c_hash_path) as file:
+            file_path = file.readline().strip()
+        return file_path
 
     def gen_path_hash(self, path) -> str:
         """
@@ -81,6 +93,13 @@ class Hashes:
         Removes hash_file from hash_dir
         """
         os.remove(os.path.join(self.hash_dir_path, p_hash))
+
+    def get_phash_list(self):
+        out = []
+        for file in os.listdir(self.hash_dir_path):
+            if os.path.isfile(os.path.join(self.hash_dir_path, file)):
+                out.append(file)
+        return out
 
     @property
     def hash_dir(self):
