@@ -40,6 +40,9 @@ class service_dropbox(ServiceInterface):
     def move_file(self, path_from, path_to):
         self.dbx.files_move(path_from, path_to)
 
+    def delete_file(self, remote_path):
+        self.dbx.files_delete(remote_path)
+
     # https://www.dropbox.com/developers/reference/content-hash
     def hash_file(self, local_path):
         file_size = os.stat(local_path).st_size
