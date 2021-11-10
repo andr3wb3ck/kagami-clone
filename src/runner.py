@@ -129,6 +129,7 @@ class Engine:
         Creating t_hash file @ .kagami/cache
         """
         # TODO: add dir handling
+        # TODO: add timeout for deletion inside t_hash file
         if p_hash is None:
             p_hash = self.hashes.gen_path_hash(entry_path)
 
@@ -163,13 +164,19 @@ class Engine:
             return False
         else:
             print(f"New file: {entry_path}")
+            commonprefix = os.path.commonprefix([entry_path, self.vault_path])
+            remote_path = entry_path[len(commonprefix) :]
+
+            self.service.upload_file(remote_path, entry_path)
             return True
 
     def action_modified(self, entry_path, is_file=False):
         # TODO: add dir handling
-        # TODO: upload new file
+        commonprefix = os.path.commonprefix([entry_path, self.vault_path])
+        remote_path = entry_path[len(commonprefix) :]
+        self.service.upload_file(remote_path, entry_path)
         print("FILE MODIFIED: ", entry_path)
-        # self.hashes.hash_entry(entry_path, single_file=True)
+        self.hashes.hash_entry(entry_path, single_file=True)
 
     @staticmethod
     def _is_file(path) -> bool:

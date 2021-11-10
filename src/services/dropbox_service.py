@@ -33,8 +33,9 @@ class service_dropbox(ServiceInterface):
             metadata, res = self.dbx.files_download(remote_path)
             file.write(res.content)
 
-    def upload_file(self):
-        pass
+    def upload_file(self, remote_path, local_path):
+        with open(local_path, 'rb') as file:
+            self.dbx.files_upload(file.read(), remote_path)
 
     def move_file(self, path_from, path_to):
         self.dbx.files_move(path_from, path_to)
