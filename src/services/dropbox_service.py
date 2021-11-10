@@ -11,9 +11,10 @@ from dropbox.exceptions import ApiError, AuthError
 from dropbox.files import WriteMode
 
 from services.service import Entry, ServiceInterface
+import dev_secrets as config
 
 DROPBOX_HASH_CHUNK_SIZE = 4 * 1024 * 1024
-TOKEN = ""
+TOKEN = config.dropbox_token
 
 
 class service_dropbox(ServiceInterface):
