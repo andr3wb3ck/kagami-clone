@@ -1,2 +1,3 @@
 .venv/*
 res/valut/*
+dev-secrets.py
