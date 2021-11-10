@@ -56,6 +56,9 @@ class service_dropbox(ServiceInterface):
         return self.dbx.files_get_metadata(path).content_hash
 
     def dir_iterator(self, path_start_point) -> Entry or None:
+        # TODO: add catch exceptions:
+        # * dir not found
+        # * scope error
         for entry in self.dbx.files_list_folder(path_start_point, recursive=True).entries:
             node = Entry(entry.path_display, service_dropbox._is_file(entry))
             yield node
