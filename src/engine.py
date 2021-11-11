@@ -176,7 +176,7 @@ class Engine:
         # TODO: add dir handling
         commonprefix = os.path.commonprefix([entry_path, self.vault_path])
         remote_path = entry_path[len(commonprefix) :]
-        self.service.upload_file(remote_path, entry_path)
+        self.service.update_file(remote_path, entry_path)
         print("FILE MODIFIED: ", entry_path)
         self.hashes.hash_entry(entry_path, single_file=True)
 
