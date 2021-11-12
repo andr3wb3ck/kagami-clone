@@ -4,6 +4,7 @@ import os
 
 
 class Entry:
+    """Represents entry on the remote data storage."""
     def __init__(self, entry_path, folder):
         self._entry_path = entry_path
         self._is_folder = folder
