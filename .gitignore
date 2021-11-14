@@ -1,3 +1,6 @@
 .venv/*
 res/valut/*
 dev_secrets.py
+.idea/
+__pycache__/
+res/*
