@@ -83,83 +83,97 @@ class Engine:
                 remote_hash = self.hashes.gen_remote_hash(file_path)
 
                 if remote_hash != c_hash:
-                    self.action_modified_handler(file_path, True)
+                    self.modified_event_handler(file_path, True)
                     modified.append(file_path)
 
         for p_hash in p_hash_set:
             filepath = self.hashes.get_filepath_from_p_hash(p_hash)
-            self.action_moved_handler(filepath, True, p_hash)
+            self.moved_event_handler(filepath, True, p_hash)
 
         new_files = []
         for filepath in newly_created:
-            if self.action_created_handler(filepath, True):
+            if self.created_event_handler(filepath, True):
                 new_files.append(filepath)
 
-    # def add_watchers(self, path):
-    #     """Adds watchers recursively to every child dir of the given path root dir"""
-    #
-    #     for root, dirs, files in os.walk(path):
-    #         for dir_name in dirs:
-    #             curr_dir = os.path.join(root, dir_name)
-    #             if curr_dir in [self.hashes.hash_dir, self.hashes.cache_dir]:
-    #                 continue
-    #
-    #             self.i.add_watch(curr_dir)
-
-    def action_moved_handler(self, entry_path, is_file=False, p_hash=None):
+    def moved_event_handler(self, src_path, dest_path, is_file=False):
         """
         Creating t_hash file @ .kagami/cache
         """
         # TODO: add dir handling
         # TODO: add timeout for deletion inside t_hash file
-        if p_hash is None:
-            p_hash = self.hashes.gen_path_hash(entry_path)
 
-        c_hash = self.hashes.get_content_hash(p_hash)
-        t_hash_path = os.path.join(self.hashes.cache_dir, c_hash)
+        # get true path on remote service
+        common_path = os.path.commonpath([src_path, os.path.abspath(self.vault_path)])
+        remote_src_path = src_path[len(common_path):]
+        remote_dest_path = dest_path[len(common_path):]
+        self.service.move_file(remote_src_path, remote_dest_path)
 
-        with open(t_hash_path, "wt") as file:
-            file.write(entry_path)
 
-        # Removing previous c_hash file @ .kagami/
-        os.remove(os.path.join(self.hashes.hash_dir, p_hash))
-        print(f"Added t_hash @ {t_hash_path};\nRemoved hash_file @ {p_hash}")
+        # hash of the absolute path to a file that was moved
+        # p_hash = self.hashes.gen_path_hash(src_path)
+        # # hash of content of that file
+        # c_hash = self.hashes.get_content_hash(p_hash)
+        # # hash of path to cached file inside cache folder
+        # t_hash_path = os.path.join(self.hashes.cache_dir, c_hash)
 
-    def action_created_handler(self, entry_path, is_file=False):
+        # if os.path.isfile(t_hash_path):
+        #     with open(t_hash_path) as file:
+        #         # t_hash_path holds previous path of file with the same content
+        #         prev_file_path = file.read()
+        #
+        #     print(f"MOVED: {prev_file_path} --> {src_path}")
+
+
+
+        #     # delete t_hash
+        #     os.remove(t_hash_path)
+        #     # remove previous c_hash file @ .kagami/
+        #     os.remove(os.path.join(self.hashes.hash_dir, p_hash))
+        #
+        #     # cache file on its new location
+        #     # basically updates path
+        #     with open(t_hash_path, "wt") as file:
+        #         file.write(src_path)
+        #     # update c_hash
+        #     self.hashes.hash_entry(src_path, single_file=True)
+        #
+        # print(f"Added t_hash @ {t_hash_path};\nRemoved hash_file @ {p_hash}")
+
+    def created_event_handler(self, src_path, is_file=False):
         # TODO: add dir handling
         # TODO: fix bug when moving dublicates with different names
         # possible fix: concatenate values inside t_hash file
-        c_hash = self.service.hash_file(entry_path)
-        t_hash_path = os.path.join(self.hashes.cache_dir, c_hash)
 
-        if os.path.isfile(t_hash_path):
-            with open(t_hash_path) as file:
-                prev_file = file.read()
-
-            print(f"{prev_file} --> {entry_path}")
-            commonprefix = os.path.commonprefix([prev_file, self.vault_path])
-            self.service.move_file(prev_file[len(commonprefix) :], entry_path[len(commonprefix) :])
-
-            # update c_hash
-            self.hashes.hash_entry(entry_path, single_file=True)
-            # delete t_hash
-            os.remove(t_hash_path)
-            return False
+        common_path = os.path.commonpath([src_path, os.path.abspath(self.vault_path)])
+        remote_path = src_path[len(common_path):]
+        if is_file:
+            self.service.upload_file(remote_path, src_path)
         else:
-            print(f"New file: {entry_path}")
-            commonprefix = os.path.commonprefix([entry_path, self.vault_path])
-            remote_path = entry_path[len(commonprefix) :]
-            self.hashes.hash_entry(entry_path, True)
-            self.service.upload_file(remote_path, entry_path)
-            return True
+            self.service.create_folder(remote_path)
 
-    def action_modified_handler(self, entry_path, is_file=False):
+
+        # c_hash = self.service.hash_file(entry_path)
+        # t_hash_path = os.path.join(self.hashes.cache_dir, c_hash)
+        #
+        # print(f"New file: {entry_path}")
+        # common_path = os.path.commonpath([entry_path, self.vault_path])
+        #
+        # self.hashes.hash_entry(entry_path, single_file=True)
+        # self.service.upload_file(remote_path, entry_path)
+
+    def modified_event_handler(self, src_path, is_file=False):
+
         # TODO: add dir handling
-        commonprefix = os.path.commonprefix([entry_path, self.vault_path])
-        remote_path = entry_path[len(commonprefix) :]
-        self.service.update_file(remote_path, entry_path)
-        print("FILE MODIFIED: ", entry_path)
-        self.hashes.hash_entry(entry_path, single_file=True)
+        common_path = os.path.commonpath([src_path, os.path.abspath(self.vault_path)])
+        remote_path = src_path[len(common_path):]
+        self.service.update_file(remote_path, src_path)
+
+
+    def deleted_event_handler(self, src_path, is_file=False):
+
+        common_path = os.path.commonpath([src_path, os.path.abspath(self.vault_path)])
+        remote_path = src_path[len(common_path):]
+        self.service.delete_file(remote_path)
 
     @staticmethod
     def _is_file(path) -> bool:
@@ -170,13 +184,17 @@ class RealTimeEngine(Engine, FileSystemEventHandler):
 
     def __init__(self, vault_path):
         super(RealTimeEngine, self).__init__(vault_path)
+
+    def dispatch(self, event):
+        print(event)
+        if self._is_ignored_file(event.src_path):
+            return
+
+        super(RealTimeEngine, self).dispatch(event)
     
     def real_time_sync(self):
         # TODO: Fix some issue when copying a file into place
         # where it was previously deleted
-
-        #ignore = {"IN_ACCESS", "IN_ISDIR", "IN_CLOSE_NOWRITE", "IN_OPEN"}
-        #self.add_watchers(self.vault_path)
 
         self.observer.schedule(self, self.vault_path, recursive=True)
         self.observer.start()
@@ -190,56 +208,28 @@ class RealTimeEngine(Engine, FileSystemEventHandler):
         if not os.path.exists(self.hashes.cache_dir):
             os.makedirs(self.hashes.cache_dir)
 
-        # for event in self.i.event_gen(yield_nones=False):
-        #     (_, status, path, filename) = event
-        #
-        #     if status[0] in ignore:
-        #         continue
-        #
-        #     entry_path = os.path.join(path, filename)
-        #     entry_type = Engine._is_file(entry_path)
-        #
-        #     print(f"{entry_path} --- {status}")
-        #
-        #     # TODO: check if required status value is always at [0] index
-        #     if status[0] == "IN_MOVED_FROM" or status[0] == "IN_DELETE":
-        #         self.action_moved_handler(entry_path, entry_type)
-        #     elif status[0] == "IN_MOVED_TO" or status[0] == "IN_CREATE":
-        #         self.action_created_handler(entry_path, entry_type)
-        #     elif status[0] == "IN_CLOSE_WRITE":
-        #         self.action_modified_handler(entry_path, entry_type)
-
     def on_created(self, event):
-        print("CREATED")
-        print(event)
-    
-    def on_modified(self, event):
 
-        entry_path = event.src_path
         is_file = not event.is_directory
 
-        print("MODIFIED")
+        self.created_event_handler(event.src_path, is_file=is_file)
 
-        print(event)
-        print(f"{entry_path} was modified.")
-        #self.action_modified_handler(entry_path)
+    def on_modified(self, event):
+
+        is_file = not event.is_directory
+        if not is_file:
+            return
+
+        self.modified_event_handler(event.src_path, is_file=is_file)
 
     def on_moved(self, event):
 
-
-        entry_path = event.dest_path
         is_file = not event.is_directory
-
-        # DEBUG INFO
-        if os.path.dirname(event.src_path) == os.path.dirname(event.dest_path):
-            print("RENAMED")
-        else:
-            print("MOVED")
-        self.action_moved_handler(entry_path, is_file)
-
-
-        #print(f"{entry_path} was modified.")
+        self.moved_event_handler(event.src_path, event.dest_path, is_file=is_file)
 
     def on_deleted(self, event):
-        entry_path = event.src_path
-        self.action_moved_handler(entry_path)
+        self.deleted_event_handler(event.src_path)
+
+    def _is_ignored_file(self, path):
+        return "~" in path
+

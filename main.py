@@ -8,7 +8,7 @@ def main():
     # r.cold_sync()
     # r.real_time_sync()
     r_real = RealTimeEngine("res/vault")
-    r_real.init_clone("/my_remote_folder")
+    r_real.init_clone("/my_remote_folder1")
     r_real.real_time_sync()
 
 

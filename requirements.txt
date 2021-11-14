@@ -1,3 +1,4 @@
+appnope==0.1.2
 astroid==2.8.0
 backcall==0.2.0
 black==21.9b0
@@ -38,5 +39,6 @@ tomli==1.2.1
 traitlets==5.1.0
 typing-extensions==3.10.0.2
 urllib3==1.26.7
+watchdog==2.1.6
 wcwidth==0.2.5
 wrapt==1.12.1
