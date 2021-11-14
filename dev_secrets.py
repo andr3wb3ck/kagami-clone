@@ -1,1 +1,1 @@
-dropbox_token = "sl.A8Q-iIFgZfAEyeKcISuTq-TpS5nA6RJwZZ3YcRNfa6kgLW6XSEbMaQ0lrHgqR5BC1scPi39fTaFXbrSTAzB8nsBksigas-rT9xrBjoqPcvbmwiYOk5l_uFBYdlDwzNEjq5G-P5y8"
+dropbox_token = "*"
