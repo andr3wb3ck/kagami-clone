@@ -1,4 +1,4 @@
-from src.engine import Engine, RealTimeEngine
+from src.engines.real_time_engine import RealTimeEngine
 
 
 def main():
@@ -16,7 +16,6 @@ if __name__ == "__main__":
     # from src.services import dropbox_service
     # dropbox_client = dropbox_service.service_dropbox()
     # dropbox_client.download_file('/my_remote_folder/1.pdf', './file.pdf')
-
 
     try:
         main()
