@@ -3,8 +3,5 @@ venv/*
 res/valut/*
 dev_secrets.py
 .idea/
-<<<<<<< Updated upstream
 __pycache__/
 res/*
-=======
->>>>>>> Stashed changes
