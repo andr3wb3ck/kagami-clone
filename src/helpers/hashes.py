@@ -43,7 +43,6 @@ class Hashes:
             path = self.vault_path
 
         print(f"Hashing {path}/*")
-
         for root, d_names, f_names in os.walk(path):
             if root == self.hash_dir_path:
                 continue
@@ -55,7 +54,7 @@ class Hashes:
                 p_hash = self.gen_path_hash(file_path)
                 c_hash = self.service_hash(file_path)
 
-                print(f"* {os.path.join(self.hash_dir_path, p_hash)}")
+                #print(f"* {os.path.join(self.hash_dir_path, p_hash)}")
 
                 with open(os.path.join(self.hash_dir_path, p_hash), "wt") as f:
                     f.write(file_path + "\n")
